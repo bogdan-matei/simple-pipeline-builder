@@ -1,0 +1,80 @@
+<mxfile host="65bd71144e">
+    <diagram id="8V-C1zAb_Wl0pqqO6g4C" name="Page-1">
+        <mxGraphModel dx="1714" dy="1150" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="7" style="edgeStyle=none;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="2" target="6" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="303"/>
+                            <mxPoint x="480" y="210"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="10" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="2" target="8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" style="edgeStyle=none;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="2" target="9" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="368"/>
+                            <mxPoint x="480" y="455"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="2" value="Action&lt;br&gt;&amp;lt;Interface&amp;gt;&lt;br&gt;&lt;br&gt;Methods&lt;br&gt;* doc &amp;lt;Interface&amp;gt;&lt;br&gt;* run &amp;lt;Interface&amp;gt;&lt;br&gt;* validate &amp;lt;Interface&amp;gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="270" width="130" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="3" target="2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="SPB&lt;br&gt;&amp;lt;Core&amp;gt;&lt;br&gt;&lt;br&gt;List&amp;lt;Interface&amp;gt; Action" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="285" width="140" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="6" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="790" y="209"/>
+                            <mxPoint x="905" y="209"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="16" value="display descriptoin of action/flag" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="13" vertex="1" connectable="0">
+                    <mxGeometry x="-0.1064" y="-1" relative="1" as="geometry">
+                        <mxPoint x="-17" y="-1" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="6" value="doc&lt;br&gt;&amp;lt;Interface&amp;gt;&lt;br&gt;&lt;br&gt;Input: string&lt;br&gt;Output: string" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="550" y="154" width="120" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="8" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="run action for flags" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="17" vertex="1" connectable="0">
+                    <mxGeometry x="-0.1524" y="1" relative="1" as="geometry">
+                        <mxPoint x="7" y="1" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="8" value="run&lt;br&gt;&amp;lt;Interface&amp;gt;&lt;br&gt;&lt;br&gt;Input: ActionDefinition&lt;br&gt;Output: ActionResult" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="550" y="280" width="120" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="validate&lt;br&gt;&amp;lt;?Interface&amp;gt;&lt;br&gt;&lt;br&gt;Input: &amp;lt;none&amp;gt;&lt;br&gt;Output: &amp;lt;none&amp;gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="550" y="400" width="120" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="12" target="14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="ActionDefinition&lt;br&gt;&amp;lt;Struct&amp;gt;&lt;br&gt;&lt;br&gt;FlagList &amp;lt;Flag&amp;gt;&lt;br&gt;Action &amp;lt;Interface&amp;gt;&lt;br&gt;ActionDescription (string)" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="820" y="280" width="170" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="Flag&lt;br&gt;&amp;lt;Struct&amp;gt;&lt;br&gt;&lt;br&gt;FlagName&lt;br&gt;FlagShortName&lt;br&gt;FlagDescription&lt;br&gt;FlagAction&amp;lt;Interface&amp;gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="1070" y="280" width="170" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="Mandatory Flags&lt;br&gt;Custom Flags&lt;br&gt;ActionRuns commands in a container image" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="780" y="405" width="250" height="50" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
