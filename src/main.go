@@ -48,7 +48,7 @@ func (cjob *ContainerJob) CreateJob(ctx context.Context) {
 		Env:   []string{"GOPATH", "GO111MODULE=auto"},
 	}, &container.HostConfig{
 		Binds: []string{
-			"/home/bmatei/projects/spb/src:/go",
+			fmt.Sprintf("%s/projects/spb/src:/go", os.Getenv("HOME")),
 		},
 	}, nil, nil, "")
 
