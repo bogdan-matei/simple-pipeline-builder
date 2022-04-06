@@ -1,0 +1,10 @@
+global-env:
+  GOOS: darwin
+  GOARCH: arm64
+  GO111MODULE: auto
+
+go-job:
+  build:
+    env: 
+      <<: &global-env
+      EXECUTABLE_NAME: spb 
