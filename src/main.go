@@ -37,18 +37,18 @@ func (cjob ContainerJob) PullImage(ctx context.Context) {
 	}
 
 	defer reader.Close()
-	// io.Copy(os.Stdout, reader)
+	io.Copy(os.Stdout, reader)
 }
 
 func (cjob *ContainerJob) CreateJob(ctx context.Context) {
 	obj, err := cjob.Client.ContainerCreate(ctx, &container.Config{
 		Image: *cjob.ImageName,
 		Tty:   false,
-		Cmd:   []string{"tail", "-f", "/dev/null"},
+		Cmd:   []string{"tail", "-f", "/dev/stdout"},
 		Env:   []string{"GOPATH", "GO111MODULE=auto"},
 	}, &container.HostConfig{
 		Binds: []string{
-			fmt.Sprintf("%s/projects/spb/src:/go", os.Getenv("HOME")),
+			fmt.Sprintf("%s:/go", os.Getenv("PWD")),
 		},
 	}, nil, nil, "")
 
@@ -137,7 +137,7 @@ func (a actionrequest) BuildSubCommandExecute() {
 	defer reader.Close()
 	io.Copy(os.Stdout, reader)
 
-	// cjob.DeleteJob(ctx)
+	cjob.DeleteJob(ctx)
 }
 
 func (a actionrequest) Execute() error {
