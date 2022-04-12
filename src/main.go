@@ -1,47 +1,81 @@
 package main
 
 import (
-	"context"
-	"errors"
+	// local package
 	"flag"
+	"spb-job/commons"
+
+	"context"
 	"fmt"
 	"io"
 	"strings"
 
+	"os"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-
-	"os"
 )
 
-type ContainerJob struct {
-	ImageName       string
-	Command         string
-	Debug           bool
-	Env             multiValueFlag
-	ContainerObject container.ContainerCreateCreatedBody
-	Client          *client.Client
-	Error           error // keep track of latest error for container client
+type GoJobSpec struct {
+	JobSpec commons.JobSpec
+	Flags   *flag.FlagSet
+	Error   error
 }
 
-type multiValueFlag []string
+func (cjob *GoJobSpec) Run() error {
+	ctx := context.Background()
 
-func (obj *multiValueFlag) String() string {
-	return strings.Join(*obj, " ")
-}
+	cjob.JobSpec.Client, cjob.Error = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 
-func (obj *multiValueFlag) Set(s string) error {
-	*obj = append(*obj, s)
+	cjob.JobError()
+
+	cjob.PullImage(ctx)
+
+	if cjob.JobSpec.Debug {
+		cjob.CreateJob(ctx)
+
+		// for loop with execs
+		for _, exec := range strings.Split(cjob.JobSpec.Command, "&&") {
+			cjob.ExecJob(ctx, strings.TrimRight(strings.TrimLeft(exec, " "), " "))
+		}
+
+		// stop container
+		if !cjob.JobSpec.Persistance {
+			cjob.DeleteJob(ctx)
+		}
+	} else {
+		cjob.CreateJobWithInput(ctx)
+	}
 	return nil
 }
 
-type actionrequest struct {
-	Flag flag.FlagSet
+func (cjob *GoJobSpec) ParseFlags() error {
+	cjob.Flags.StringVar(&cjob.JobSpec.ImageName, "image", "golang:1.18.0-alpine3.15", "name of image used for build command")
+	cjob.Flags.BoolVar(&cjob.JobSpec.Debug, "d", false, "create and exec is used over run")
+	cjob.Flags.Var(&cjob.JobSpec.Env, "env", "environment variables to be passed")
+	cjob.Flags.Var(&cjob.JobSpec.Env, "e", "environment variables to be passed")
+	cjob.Flags.BoolVar(&cjob.JobSpec.Persistance, "persistance", false, "prevents deletion of the job while in debug mode")
+
+	cjob.Flags.Parse(os.Args[2:])
+
+	cjob.JobSpec.Command = strings.Join(cjob.Flags.Args(), " ")
+
+	fmt.Printf("Command: %s\n", cjob.JobSpec.ImageName)
+	fmt.Println(cjob.JobSpec.Env.String())
+
+	return nil
 }
 
-func (cjob ContainerJob) PullImage(ctx context.Context) {
-	reader, err := cjob.Client.ImagePull(ctx, cjob.ImageName, types.ImagePullOptions{})
+func (cjob GoJobSpec) JobError() {
+	if cjob.Error != nil {
+		panic(cjob.Error)
+	}
+
+}
+
+func (cjob GoJobSpec) PullImage(ctx context.Context) {
+	reader, err := cjob.JobSpec.Client.ImagePull(ctx, cjob.JobSpec.ImageName, types.ImagePullOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -50,86 +84,77 @@ func (cjob ContainerJob) PullImage(ctx context.Context) {
 	io.Copy(os.Stdout, reader)
 }
 
-func (cjob *ContainerJob) CreateJob(ctx context.Context) {
-	obj, err := cjob.Client.ContainerCreate(ctx, &container.Config{
-		Image: cjob.ImageName,
+func (cjob *GoJobSpec) CreateJob(ctx context.Context) {
+	cjob.JobSpec.ContainerObject, cjob.Error = cjob.JobSpec.Client.ContainerCreate(ctx, &container.Config{
+		Image: cjob.JobSpec.ImageName,
 		Tty:   false,
 		Cmd:   []string{"tail", "-f", "/dev/null"},
-		Env:   cjob.Env,
+		Env:   cjob.JobSpec.Env,
 	}, &container.HostConfig{
 		Binds: []string{
 			fmt.Sprintf("%s:/go", os.Getenv("PWD")),
 		},
 	}, nil, nil, "")
 
-	cjob.ContainerObject = obj
-	cjob.Error = err
-	cjob.ContainerError()
+	(*cjob).JobError()
 
-	cjob.Error = cjob.Client.ContainerStart(ctx, cjob.ContainerObject.ID, types.ContainerStartOptions{})
+	cjob.Error = cjob.JobSpec.Client.ContainerStart(ctx, cjob.JobSpec.ContainerObject.ID, types.ContainerStartOptions{})
 
-	cjob.ContainerError()
-	fmt.Printf("[%s] Job with image '%s' started successfully\n", cjob.ContainerObject.ID[0:12], cjob.ImageName)
+	(*cjob).JobError()
+
+	fmt.Printf("[%s] Job with image '%s' started successfully\n", cjob.JobSpec.ContainerObject.ID[0:12], cjob.JobSpec.ImageName)
 
 }
 
-func (cjob *ContainerJob) CreateJobWithInput(ctx context.Context) {
+func (cjob *GoJobSpec) CreateJobWithInput(ctx context.Context) {
 
-	obj, err := cjob.Client.ContainerCreate(ctx, &container.Config{
+	cjob.JobSpec.ContainerObject, cjob.Error = cjob.JobSpec.Client.ContainerCreate(ctx, &container.Config{
 		AttachStdout: true,
 		AttachStderr: true,
-		Image:        cjob.ImageName,
+		Image:        cjob.JobSpec.ImageName,
 		Tty:          false,
-		Cmd:          []string{"/bin/sh", "-c", cjob.Command},
-		Env:          cjob.Env,
+		Cmd:          []string{"/bin/sh", "-c", cjob.JobSpec.Command},
+		Env:          cjob.JobSpec.Env,
 	}, &container.HostConfig{
 		Binds: []string{
 			fmt.Sprintf("%s:/go", os.Getenv("PWD")),
 		},
 	}, nil, nil, "")
 
-	cjob.ContainerObject = obj
-	cjob.Error = err
-	cjob.ContainerError()
+	cjob.JobError()
 
-	cjob.Error = cjob.Client.ContainerStart(ctx, cjob.ContainerObject.ID, types.ContainerStartOptions{})
+	cjob.Error = cjob.JobSpec.Client.ContainerStart(ctx, cjob.JobSpec.ContainerObject.ID, types.ContainerStartOptions{})
 
-	cjob.ContainerError()
+	cjob.JobError()
 
-	fmt.Printf("[%s] Job with image '%s' ran successfully\n", cjob.ContainerObject.ID[0:12], cjob.ImageName)
+	fmt.Printf("[%s] Job with image '%s' ran successfully\n", cjob.JobSpec.ContainerObject.ID[0:12], cjob.JobSpec.ImageName)
 
-	reader, err := cjob.Client.ContainerLogs(ctx, cjob.ContainerObject.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true, Follow: true})
+	reader, err := cjob.JobSpec.Client.ContainerLogs(ctx, cjob.JobSpec.ContainerObject.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true, Follow: true})
 
 	cjob.Error = err
-	cjob.ContainerError()
+	cjob.JobError()
 
 	defer reader.Close()
 	io.Copy(os.Stdout, reader)
 
-	fmt.Printf("[%s] Job with image '%s' finished successfully\n", cjob.ContainerObject.ID[0:12], cjob.ImageName)
+	fmt.Printf("[%s] Job with image '%s' finished successfully\n", cjob.JobSpec.ContainerObject.ID[0:12], cjob.JobSpec.ImageName)
 
 }
 
-func (cjob ContainerJob) ContainerError() {
-	if cjob.Error != nil {
-		panic(cjob.Error)
-	}
-}
-
-func (cjob ContainerJob) DeleteJob(ctx context.Context) {
-	fmt.Printf("[%s] Deleting job\n", cjob.ContainerObject.ID[0:12])
-	cjob.Error = cjob.Client.ContainerRemove(ctx, cjob.ContainerObject.ID, types.ContainerRemoveOptions{
+func (cjob GoJobSpec) DeleteJob(ctx context.Context) {
+	fmt.Printf("[%s] Deleting job\n", cjob.JobSpec.ContainerObject.ID[0:12])
+	cjob.Error = cjob.JobSpec.Client.ContainerRemove(ctx, cjob.JobSpec.ContainerObject.ID, types.ContainerRemoveOptions{
 		Force: true,
 	})
 
-	cjob.ContainerError()
-	fmt.Printf("[%s] Job deleted succesfully\n", cjob.ContainerObject.ID[0:12])
+	cjob.JobError()
+	fmt.Printf("[%s] Job deleted succesfully\n", cjob.JobSpec.ContainerObject.ID[0:12])
 
 }
 
-func (cjob ContainerJob) ExecJob(ctx context.Context, cmd string) {
-	fmt.Printf("[%s] Executing '%s' action\n", cjob.ContainerObject.ID[0:12], cmd)
-	exec, err := cjob.Client.ContainerExecCreate(ctx, cjob.ContainerObject.ID, types.ExecConfig{
+func (cjob GoJobSpec) ExecJob(ctx context.Context, cmd string) {
+	fmt.Printf("[%s] Executing '%s' action\n", cjob.JobSpec.ContainerObject.ID[0:12], cmd)
+	exec, err := cjob.JobSpec.Client.ContainerExecCreate(ctx, cjob.JobSpec.ContainerObject.ID, types.ExecConfig{
 		AttachStderr: true,
 		AttachStdout: true,
 		Tty:          true,
@@ -137,73 +162,22 @@ func (cjob ContainerJob) ExecJob(ctx context.Context, cmd string) {
 	})
 
 	cjob.Error = err
-	cjob.ContainerError()
+	cjob.JobError()
 
-	attach, err := cjob.Client.ContainerExecAttach(ctx, exec.ID, types.ExecStartCheck{})
+	attach, err := cjob.JobSpec.Client.ContainerExecAttach(ctx, exec.ID, types.ExecStartCheck{})
 
 	cjob.Error = err
-	cjob.ContainerError()
+	cjob.JobError()
 
 	defer attach.Close()
 	io.Copy(os.Stdout, attach.Reader)
 
-	fmt.Printf("[%s] Action '%s' executed succesfully\n", cjob.ContainerObject.ID[0:12], cmd)
+	fmt.Printf("[%s] Action '%s' executed succesfully\n", cjob.JobSpec.ContainerObject.ID[0:12], cmd)
 }
 
-func (cjob *ContainerJob) SetFields(a actionrequest) {
-	a.Flag.StringVar(&cjob.ImageName, "image", "golang:1.18.0-alpine3.15", "name of image used for build command")
-	a.Flag.BoolVar(&cjob.Debug, "d", false, "create and exec is used over run")
-	a.Flag.Var(&cjob.Env, "env", "environment variables to be passed")
-	a.Flag.Var(&cjob.Env, "e", "environment variables to be passed")
-
-	a.Flag.Parse(os.Args[3:])
-	cjob.Command = strings.Join(a.Flag.Args(), " ")
-
-	fmt.Printf("Command: %s\n", cjob.Command)
-	fmt.Println(cjob.Env.String())
-}
-
-func (a actionrequest) BuildSubCommandExecute() {
-
-	cjob := ContainerJob{}
-	cjob.SetFields(a)
-
-	ctx := context.Background()
-
-	cjob.Client, cjob.Error = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-
-	cjob.ContainerError()
-
-	cjob.PullImage(ctx)
-
-	if cjob.Debug {
-		cjob.CreateJob(ctx)
-
-		// for loop with execs
-		for _, exec := range strings.Split(cjob.Command, "&&") {
-			cjob.ExecJob(ctx, strings.TrimRight(strings.TrimLeft(exec, " "), " "))
-		}
-
-		// stop container
-		cjob.DeleteJob(ctx)
-	} else {
-		cjob.CreateJobWithInput(ctx)
-	}
-}
-
-func (a actionrequest) Execute() error {
-
-	if len(os.Args) < 3 {
-		return errors.New("missing subcommand")
-	}
-
-	switch os.Args[2] {
-	case "build":
-		build := actionrequest{Flag: *flag.NewFlagSet(os.Args[2], flag.PanicOnError)}
-		build.BuildSubCommandExecute()
-	}
-
-	return nil
+func Run(jobRun commons.JobRun) {
+	jobRun.ParseFlags()
+	jobRun.Run()
 }
 
 func main() {
@@ -213,16 +187,13 @@ func main() {
 	// refresh state
 
 	// run action
-	tmp := actionrequest{Flag: *flag.NewFlagSet("run", flag.PanicOnError)}
-
+	flag := flag.NewFlagSet(os.Args[1], flag.PanicOnError)
 	switch os.Args[1] {
-	case "run":
-		err := tmp.Execute()
-
-		if err != nil {
-			panic(err)
-		}
-
+	case "run-go":
+		goJob := GoJobSpec{Flags: flag}
+		Run(&goJob)
+	default:
+		fmt.Println("Plugin doesn't exist")
+		os.Exit(1)
 	}
-
 }

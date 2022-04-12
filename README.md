@@ -30,15 +30,15 @@ The tool can be called directly by using `go run <main.go path>`. It supports th
 
 ```bash
 # Generic command
-`go run main.go run build [-image <string>] [-e/-env <key=value>] [-d] "command <string>" `
+`go run main.go run-go [-image <string>] [-e/-env <key=value>] [-d] "command <string>" `
 
 
 # Example of cli usage to build current code project 
 # Workdir is src/ folder of this repository
-`go run main.go run build -e GOPATH -e GO111MODULE=auto -e GOOS=linux -e GOARCH=386 "go mod tidy && go build"`
+`go run main.go run-go -e GOPATH -e GO111MODULE=auto -e GOOS=linux -e GOARCH=386 "go mod tidy && go build"`
 
 # Example with debug
-`go run main.go run build -e GOPATH -e GO111MODULE=auto -e GOOS=linux -e GOARCH=386 -d "go mod tidy && go build"`
+`go run main.go run-go -e GOPATH -e GO111MODULE=auto -e GOOS=linux -e GOARCH=386 -d "go mod tidy && go build"`
 
 
 # GOPATH is provided without value to unset the env var; it's deprecated but stil set by the default image 'golang:1.18.0-alpine3.15'
@@ -59,7 +59,9 @@ The tool can be called directly by using `go run <main.go path>`. It supports th
     * the interface needs to be implemented for function to run
   * restructure code for first try of the project
     * structure project and code in go-way
-  * add -h to show existing flags and usage
+  * add -h to show existing flags and usage :heavy_check_mark:
+  * enhance functionality
+    * e.g. allow multiple binds
 
 * Next steps (goals)
   * Link job in a flow

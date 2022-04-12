@@ -4,6 +4,8 @@ go 1.18
 
 require github.com/docker/docker v20.10.14+incompatible
 
+// require code.sajari.com/docconv v1.2.0 // indirect
+
 require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/containerd/containerd v1.6.2 // indirect
@@ -26,4 +28,7 @@ require (
 	google.golang.org/grpc v1.45.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gotest.tools/v3 v3.1.0 // indirect
+	spb-job/commons v0.0.0
 )
+
+replace spb-job/commons => ../commons
